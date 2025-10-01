@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MySites - Advanced Dark Mode</title>
+<style>
+/* ======== DARK MODE CSS ======== */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro", sans-serif;
+  background: #1c1c1e;
+  color: #fff;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+header p {
+  color: #aaa;
+}
+
+/* Add Website Section */
+.add-site {
+  background: #2c2c2e;
+  padding: 15px;
+  border-radius: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-site input, .add-site select {
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #555;
+  background: #1c1c1e;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.add-site input::placeholder {
+  color: #888;
+}
+
+.add-site button {
+  padding: 10px;
+  border-radius: 12px;
+  border: none;
+  background: #0a84ff;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-site button:hover {
+  background: #0066cc;
+}
+
+.error {
+  color: #ff453a;
+  font-size: 0.9rem;
+}
+
+/* Search Section */
+.search-site {
+  margin-bottom: 15px;
+}
+
+.search-site input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #555;
+  background: #1c1c1e;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.search-site input::placeholder {
+  color: #888;
+}
+
+/* Site Cards */
+.site-card {
+  background: #2c2c2e;
+  padding: 15px;
+  border-radius: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.site-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+.site-card .left {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.site-card a {
+  text-decoration: none;
+  color: #0a84ff;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.site-card .btn-group {
+  display: flex;
+  gap: 5px;
+}
+
+.site-card button {
+  background: #ff375f;
+  color: white;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.site-card button.copy-btn {
+  background: #32d74b;
+}
+
+.site-card button:hover {
+  transform: scale(1.1);
+}
+
+.site-card button.copy-btn:hover {
+  background: #28a536;
+}
+
+.site-card button.delete-btn:hover {
+  background: #c12741;
+}
+
+.empty {
+  text-align: center;
+  color: #888;
+}
+
+.total-count {
+  color: #aaa;
+  margin-bottom: 10px;
+  text-align: right;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>MySites</h1>
+    <p>Your website collection (Dark Mode)</p>
+  </header>
+
+  <!-- Add Website -->
+  <section class="add-site">
+    <input type="text" id="name" placeholder="Website Name">
+    <input type="text" id="url" placeholder="Website URL">
+    <input type="text" id="tags" placeholder="Tags (comma separated)">
+    <button id="saveBtn">Save Website</button>
+    <p id="error" class="error"></p>
+  </section>
+
+  <!-- Search -->
+  <section class="search-site">
+    <input type="text" id="search" placeholder="Search websites by name or tag...">
+  </section>
+
+  <!-- Total Count -->
+  <div class="total-count" id="totalCount"></div>
+
+  <!-- Sites List -->
+  <section id="sitesList">
+    <p class="empty">No websites saved</p>
+  </section>
+</div>
+
+<script>
+/* ======== JS ======== */
+const nameInput = document.getElementById('name');
+const urlInput = document.getElementById('url');
+const tagsInput = document.getElementById('tags');
+const saveBtn = document.getElementById('saveBtn');
+const errorEl = document.getElementById('error');
+const sitesList = document.getElementById('sitesList');
+const searchInput = document.getElementById('search');
+const totalCountEl = document.getElementById('totalCount');
+
+let websites = JSON.parse(localStorage.getItem('websites') || '[]');
+
+// Render websites
+function renderWebsites(filter='') {
+  sitesList.innerHTML = '';
+  let filtered = websites.filter(site => 
+    site.name.toLowerCase().includes(filter.toLowerCase()) ||
+    site.tags.join(' ').toLowerCase().includes(filter.toLowerCase())
+  );
+
+  totalCountEl.textContent = `Saved Websites (${filtered.length})`;
+
+  if (filtered.length === 0) {
+    sitesList.innerHTML = '<p class="empty">No websites saved</p>';
+    return;
+  }
+
+  filtered.forEach(site => {
+    const card = document.createElement('div');
+    card.className = 'site-card';
+    card.innerHTML = `
+      <div class="left">
+        <a href="${site.url}" target="_blank">${site.name}</a>
+        <small>${site.tags.join(', ')}</small>
+      </div>
+      <div class="btn-group">
+        <button class="copy-btn" onclick="copyURL('${site.url}')">Copy URL</button>
+        <button class="delete-btn" onclick="deleteWebsite(${site.id})">Delete</button>
+      </div>
+    `;
+    sitesList.appendChild(card);
+  });
+}
+
+// URL Validation
+function isValidUrl(urlString) {
+  try {
+    const url = urlString.startsWith('http://') || urlString.startsWith('https://') 
+      ? urlString 
+      : `https://${urlString}`;
+    new URL(url);
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+function formatUrl(urlString) {
+  return urlString.startsWith('http://') || urlString.startsWith('https://')
+    ? urlString
+    : `https://${urlString}`;
+}
+
+// Add website
+saveBtn.addEventListener('click', () => {
+  errorEl.textContent = '';
+  const name = nameInput.value.trim();
+  const url = urlInput.value.trim();
+  const tags = tagsInput.value.trim().split(',').map(t => t.trim()).filter(Boolean);
+
+  if (!name) { errorEl.textContent = 'Enter website name'; return; }
+  if (!url) { errorEl.textContent = 'Enter website URL'; return; }
+  if (!isValidUrl(url)) { errorEl.textContent = 'Enter a valid URL'; return; }
+
+  websites.unshift({ id: Date.now(), name, url: formatUrl(url), tags });
+  localStorage.setItem('websites', JSON.stringify(websites));
+
+  nameInput.value = '';
+  urlInput.value = '';
+  tagsInput.value = '';
+
+  renderWebsites(searchInput.value);
+});
+
+// Delete website
+function deleteWebsite(id) {
+  websites = websites.filter(site => site.id !== id);
+  localStorage.setItem('websites', JSON.stringify(websites));
+  renderWebsites(searchInput.value);
+}
+
+// Copy URL
+function copyURL(url) {
+  navigator.clipboard.writeText(url).then(() => alert('URL copied to clipboard!'));
+}
+
+// Search / Filter
+searchInput.addEventListener('input', () => {
+  renderWebsites(searchInput.value);
+});
+
+// Enter key support
+[nameInput, urlInput, tagsInput].forEach(input => {
+  input.addEventListener('keypress', e => {
+    if (e.key === 'Enter') saveBtn.click();
+  });
+});
+
+// Initial render
+renderWebsites();
+</script>
+</body>
+</html>
